@@ -12,6 +12,8 @@ import (
 const database = "testing.db"
 
 func TestInit(t *testing.T) {
+	os.Remove(database)
+
 	var app Application
 	app.Init(database)
 	defer app.db.Close()
@@ -19,11 +21,11 @@ func TestInit(t *testing.T) {
 	if _, err := os.Stat(database); os.IsNotExist(err) {
 		t.Fatalf("%s was not created", database)
 	}
-
-	os.Remove(database)
 }
 
 func TestContactCreate(t *testing.T) {
+	os.Remove(database)
+
 	var app Application
 	app.Init(database)
 	defer app.db.Close()
@@ -47,8 +49,39 @@ func TestContactCreate(t *testing.T) {
 		return
 	}
 
-	if string(out) != "{\"ok\":true}\n" {
+	if string(out) != `{"ok":true}`+"\n" {
 		t.Fatalf("ContactCreate; failure: %s", out)
+		return
+	}
+}
+
+func TestContactRead(t *testing.T) {
+	os.Remove(database)
+
+	var app Application
+	app.Init(database)
+	defer app.db.Close()
+
+	var err error
+	var out []byte
+	var res *http.Response
+	ts := httptest.NewTLSServer(http.HandlerFunc(app.ContactRead))
+	defer ts.Close()
+
+	client := ts.Client()
+	if res, err = client.Get(ts.URL + "?id=1"); err != nil {
+		t.Fatalf("ContactRead; client.Get: %s", err)
+		return
+	}
+	defer res.Body.Close()
+
+	if out, err = ioutil.ReadAll(res.Body); err != nil {
+		t.Fatalf("ContactRead; ioutil.ReadAll: %s", err)
+		return
+	}
+
+	if string(out) != `{"ok":true,"data":{"id":1,"firstname":"John","lastname":"Smith","phone":"6045551234","address":"350 W Georgia St, Vancouver, BC","email":"john@example.com"}}`+"\n" {
+		t.Fatalf("ContactRead; failure: %s", out)
 		return
 	}
 }
