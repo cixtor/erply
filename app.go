@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 
@@ -27,6 +27,9 @@ type Application struct {
 
 	// database is the full path to the SQLite database file.
 	database string
+
+	// migration is an SQL file to initialize the database.
+	migration string
 }
 
 // Response represents the data to respond to XHR requests.
@@ -36,22 +39,25 @@ type Response struct {
 	Data  interface{} `json:"data,omitempty"`
 }
 
-// Init creates the database tables and inserts initial data.
-func (app *Application) Init(database string) {
+// Initialize creates the database tables and inserts initial data.
+func (app *Application) Initialize() {
 	var err error
 	var db *sql.DB
 
-	if db, err = sql.Open("sqlite3", database); err != nil {
-		fmt.Println("sql.Open", err)
-		os.Exit(1)
-	}
-
-	if _, err = db.Exec(dbtables); err != nil {
-		fmt.Println("db.Init", err)
+	if db, err = sql.Open("sqlite3", app.database); err != nil {
+		router.Logger.Println("sql.Open", err)
 		os.Exit(1)
 	}
 
 	app.db = db
+
+	// load SQL migration file, if available.
+	if out, err2 := ioutil.ReadFile(app.migration); err2 == nil {
+		if _, err = db.Exec(string(out)); err != nil {
+			router.Logger.Println("db.Init", err)
+			os.Exit(1)
+		}
+	}
 }
 
 // write writes a JSON encoded object with a successful message.

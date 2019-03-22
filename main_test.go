@@ -10,24 +10,29 @@ import (
 )
 
 const database = "testing.db"
+const migration = "migration.sql"
 
-func TestInit(t *testing.T) {
+func createApp(t *testing.T) Application {
 	os.Remove(database)
 
 	var app Application
-	app.Init(database)
-	defer app.db.Close()
+	app.database = database
+	app.migration = migration
+	app.Initialize()
 
 	if _, err := os.Stat(database); os.IsNotExist(err) {
 		t.Fatalf("%s was not created", database)
 	}
+
+	return app
+}
+
+func TestNew(t *testing.T) {
+	createApp(t)
 }
 
 func TestContactCreate(t *testing.T) {
-	os.Remove(database)
-
-	var app Application
-	app.Init(database)
+	app := createApp(t)
 	defer app.db.Close()
 
 	var err error
@@ -56,10 +61,7 @@ func TestContactCreate(t *testing.T) {
 }
 
 func TestContactRead(t *testing.T) {
-	os.Remove(database)
-
-	var app Application
-	app.Init(database)
+	app := createApp(t)
 	defer app.db.Close()
 
 	var err error
