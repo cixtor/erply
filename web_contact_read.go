@@ -6,16 +6,6 @@ import (
 	"net/http"
 )
 
-// Contact represents a single record in the database.
-type Contact struct {
-	ID        int    `json:"id"`
-	Firstname string `json:"firstname"`
-	Lastname  string `json:"lastname"`
-	Phone     string `json:"phone"`
-	Address   string `json:"address"`
-	Email     string `json:"email"`
-}
-
 func init() {
 	router.GET("/contact", app.ContactRead)
 }
