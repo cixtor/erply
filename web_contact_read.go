@@ -16,19 +16,28 @@ func init() {
 //   > Host: localhost:3000
 //   > Connection: close
 func (app *Application) ContactRead(w http.ResponseWriter, r *http.Request) {
-	var c Contact
-	var id string
-	var err error
-	var stmt *sql.Stmt
+	id := r.URL.Query().Get("id")
+	c, err := contactRead(app.db, id)
 
-	if id = r.URL.Query().Get("id"); id == "" {
-		fail(w, r, fmt.Errorf("missing `id` query parameter"))
+	if err != nil {
+		fail(w, r, err)
 		return
 	}
 
-	if stmt, err = app.db.Prepare("SELECT * FROM contacts WHERE id = ?"); err != nil {
-		fail(w, r, err)
-		return
+	write(w, r, Response{Ok: true, Data: c})
+}
+
+func contactRead(db *sql.DB, id string) (Contact, error) {
+	var c Contact
+	var err error
+	var stmt *sql.Stmt
+
+	if id == "" {
+		return Contact{}, fmt.Errorf("missing `id` query parameter")
+	}
+
+	if stmt, err = db.Prepare("SELECT * FROM contacts WHERE id = ?"); err != nil {
+		return Contact{}, err
 	}
 
 	defer stmt.Close()
@@ -41,9 +50,8 @@ func (app *Application) ContactRead(w http.ResponseWriter, r *http.Request) {
 		&c.Address,
 		&c.Email,
 	); err != nil {
-		fail(w, r, err)
-		return
+		return Contact{}, err
 	}
 
-	write(w, r, Response{Ok: true, Data: c})
+	return c, nil
 }

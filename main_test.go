@@ -87,3 +87,39 @@ func TestContactRead(t *testing.T) {
 		return
 	}
 }
+
+func TestContactUpdate(t *testing.T) {
+	app := createApp(t)
+	defer app.db.Close()
+
+	var err error
+	var out []byte
+	var req *http.Request
+	var res *http.Response
+	ts := httptest.NewTLSServer(http.HandlerFunc(app.ContactUpdate))
+	defer ts.Close()
+
+	body := strings.NewReader(`id=2&firstname=Foo&lastname=Bar&phone=6045551234&address=350+W+Georgia+St%2C+Vancouver%2C+BC&email=foobar%40example.com`)
+	if req, err = http.NewRequest(http.MethodPatch, ts.URL, body); err != nil {
+		t.Fatalf("ContactUpdate; http.NewRequest: %s", err)
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	if res, err = ts.Client().Do(req); err != nil {
+		t.Fatalf("ContactUpdate; client.Patch: %s", err)
+		return
+	}
+	defer res.Body.Close()
+
+	if out, err = ioutil.ReadAll(res.Body); err != nil {
+		t.Fatalf("ContactUpdate; ioutil.ReadAll: %s", err)
+		return
+	}
+
+	if string(out) != `{"ok":true,"data":{"id":2,"firstname":"Foo","lastname":"Bar","phone":"6045551234","address":"350 W Georgia St, Vancouver, BC","email":"foobar@example.com"}}`+"\n" {
+		t.Fatalf("ContactUpdate; failure: %s", out)
+		return
+	}
+}
