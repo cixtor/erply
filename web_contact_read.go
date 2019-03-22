@@ -13,6 +13,7 @@ func init() {
 // CreateRead returns a single contact from the database, if available.
 //
 //   > GET /contact?id=1 HTTP/1.1
+//   > Authorization: Basic Zm9vQGV4YW1wbGUuY29tOnBhc3N3b3Jk
 //   > Host: localhost:3000
 //   > Connection: close
 func (app *Application) ContactRead(w http.ResponseWriter, r *http.Request) {

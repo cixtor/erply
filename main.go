@@ -38,5 +38,7 @@ func main() {
 	router.ShutdownTimeout = 10 * time.Second
 	router.ReadHeaderTimeout = 10 * time.Second
 
+	router.Use(app.Auth)
+
 	router.ListenAndServe()
 }

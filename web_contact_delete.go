@@ -13,6 +13,7 @@ func init() {
 // ContactDelete
 
 //   > DELETE /contact?id=2 HTTP/1.1
+//   > Authorization: Basic Zm9vQGV4YW1wbGUuY29tOnBhc3N3b3Jk
 //   > Host: localhost:3000
 //   > Connection: close
 func (app *Application) ContactDelete(w http.ResponseWriter, r *http.Request) {

@@ -14,6 +14,7 @@ func init() {
 //
 //   > PATCH /contact HTTP/1.1
 //   > Content-Type: application/x-www-form-urlencoded; charset=utf-8
+//   > Authorization: Basic Zm9vQGV4YW1wbGUuY29tOnBhc3N3b3Jk
 //   > Host: localhost:3000
 //   > Connection: close
 //   >

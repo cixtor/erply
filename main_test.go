@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -153,6 +154,112 @@ func TestContactDelete(t *testing.T) {
 
 	if string(out) != `{"ok":true}`+"\n" {
 		t.Fatalf("ContactDelete; failure: %s", out)
+		return
+	}
+}
+
+func TestAuthSuccess(t *testing.T) {
+	app := createApp(t)
+	defer app.db.Close()
+
+	var err error
+	var out []byte
+	var req *http.Request
+	var res *http.Response
+	md := func(w http.ResponseWriter, r *http.Request) { fmt.Fprintf(w, "5d414") }
+	ts := httptest.NewTLSServer(app.Auth(http.HandlerFunc(md)))
+	defer ts.Close()
+
+	if req, err = http.NewRequest(http.MethodGet, ts.URL+"?id=1", nil); err != nil {
+		t.Fatalf("AuthSuccess; http.NewRequest: %s", err)
+		return
+	}
+
+	req.SetBasicAuth("john@example.com", "85EC496B-7EC4-4478-B27B-94B381B4030F")
+
+	if res, err = ts.Client().Do(req); err != nil {
+		t.Fatalf("AuthSuccess; client.Get: %s", err)
+		return
+	}
+	defer res.Body.Close()
+
+	if out, err = ioutil.ReadAll(res.Body); err != nil {
+		t.Fatalf("AuthSuccess; ioutil.ReadAll: %s", err)
+		return
+	}
+
+	if string(out) != `5d414` {
+		t.Fatalf("AuthSuccess; failure: %s", out)
+		return
+	}
+}
+
+func TestAuthForbidden(t *testing.T) {
+	app := createApp(t)
+	defer app.db.Close()
+
+	var err error
+	var out []byte
+	var req *http.Request
+	var res *http.Response
+	md := func(w http.ResponseWriter, r *http.Request) { fmt.Fprintf(w, "ea316") }
+	ts := httptest.NewTLSServer(app.Auth(http.HandlerFunc(md)))
+	defer ts.Close()
+
+	if req, err = http.NewRequest(http.MethodGet, ts.URL+"?id=1", nil); err != nil {
+		t.Fatalf("AuthSuccess; http.NewRequest: %s", err)
+		return
+	}
+
+	req.SetBasicAuth("john@example.com", "invalid-api-key")
+
+	if res, err = ts.Client().Do(req); err != nil {
+		t.Fatalf("AuthSuccess; client.Get: %s", err)
+		return
+	}
+	defer res.Body.Close()
+
+	if out, err = ioutil.ReadAll(res.Body); err != nil {
+		t.Fatalf("AuthSuccess; ioutil.ReadAll: %s", err)
+		return
+	}
+
+	if res.StatusCode != 403 || string(out) != "Forbidden\n" {
+		t.Fatalf("AuthSuccess; failure: (%d) %s", res.StatusCode, out)
+		return
+	}
+}
+
+func TestAuthUnauthorized(t *testing.T) {
+	app := createApp(t)
+	defer app.db.Close()
+
+	var err error
+	var out []byte
+	var req *http.Request
+	var res *http.Response
+	md := func(w http.ResponseWriter, r *http.Request) { fmt.Fprintf(w, "ea316") }
+	ts := httptest.NewTLSServer(app.Auth(http.HandlerFunc(md)))
+	defer ts.Close()
+
+	if req, err = http.NewRequest(http.MethodGet, ts.URL+"?id=1", nil); err != nil {
+		t.Fatalf("AuthSuccess; http.NewRequest: %s", err)
+		return
+	}
+
+	if res, err = ts.Client().Do(req); err != nil {
+		t.Fatalf("AuthSuccess; client.Get: %s", err)
+		return
+	}
+	defer res.Body.Close()
+
+	if out, err = ioutil.ReadAll(res.Body); err != nil {
+		t.Fatalf("AuthSuccess; ioutil.ReadAll: %s", err)
+		return
+	}
+
+	if res.StatusCode != 401 || string(out) != "Unauthorized\n" {
+		t.Fatalf("AuthSuccess; failure: (%d) %s", res.StatusCode, out)
 		return
 	}
 }
