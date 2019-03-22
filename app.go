@@ -2,7 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -27,6 +29,14 @@ type Application struct {
 	database string
 }
 
+// Response represents the data to respond to XHR requests.
+type Response struct {
+	Ok    bool        `json:"ok"`
+	Error error       `json:"error,omitempty"`
+	Data  interface{} `json:"data,omitempty"`
+}
+
+// Init creates the database tables and inserts initial data.
 func (app *Application) Init(database string) {
 	var err error
 	var db *sql.DB
@@ -42,4 +52,19 @@ func (app *Application) Init(database string) {
 	}
 
 	app.db = db
+}
+
+// write writes a JSON encoded object with a successful message.
+func write(w http.ResponseWriter, r *http.Request, v interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		router.Logger.Println("json.Encode", err)
+		return
+	}
+}
+
+// fail writes a JSON encoded object with an error message.
+func fail(w http.ResponseWriter, r *http.Request, err error) {
+	write(w, r, Response{Error: err})
 }
