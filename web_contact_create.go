@@ -23,25 +23,35 @@ func (app *Application) ContactCreate(w http.ResponseWriter, r *http.Request) {
 	var stmt *sql.Stmt
 
 	if err = r.ParseForm(); err != nil {
-		fmt.Println("r.ParseForm", err)
 		fail(w, r, fmt.Errorf("r.ParseForm %s", err))
 		return
 	}
 
-	firstname := r.Form.Get("firstname")
-	lastname := r.Form.Get("lastname")
-	phone := r.Form.Get("phone")
-	address := r.Form.Get("address")
-	email := r.Form.Get("email")
+	c := Contact{
+		Firstname: r.Form.Get("firstname"),
+		Lastname:  r.Form.Get("lastname"),
+		Phone:     r.Form.Get("phone"),
+		Address:   r.Form.Get("address"),
+		Email:     r.Form.Get("email"),
+	}
+
+	if err = c.Valid(); err != nil {
+		fail(w, r, err)
+		return
+	}
 
 	if stmt, err = app.db.Prepare(`INSERT INTO contacts (firstname, lastname, phone, address, email) VALUES(?, ?, ?, ?, ?)`); err != nil {
-		fmt.Println("db.Prepare", err)
 		fail(w, r, fmt.Errorf("db.Prepare %s", err))
 		return
 	}
 
-	if _, err = stmt.Exec(firstname, lastname, phone, address, email); err != nil {
-		fmt.Println("stmt.Exec", err)
+	if _, err = stmt.Exec(
+		c.Firstname,
+		c.Lastname,
+		c.Phone,
+		c.Address,
+		c.Email,
+	); err != nil {
 		fail(w, r, fmt.Errorf("stmt.Exec %s", err))
 		return
 	}
