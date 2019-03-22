@@ -123,3 +123,36 @@ func TestContactUpdate(t *testing.T) {
 		return
 	}
 }
+
+func TestContactDelete(t *testing.T) {
+	app := createApp(t)
+	defer app.db.Close()
+
+	var err error
+	var out []byte
+	var req *http.Request
+	var res *http.Response
+	ts := httptest.NewTLSServer(http.HandlerFunc(app.ContactDelete))
+	defer ts.Close()
+
+	if req, err = http.NewRequest(http.MethodDelete, ts.URL+"?id=2", nil); err != nil {
+		t.Fatalf("ContactDelete; http.NewRequest: %s", err)
+		return
+	}
+
+	if res, err = ts.Client().Do(req); err != nil {
+		t.Fatalf("ContactDelete; client.Delete: %s", err)
+		return
+	}
+	defer res.Body.Close()
+
+	if out, err = ioutil.ReadAll(res.Body); err != nil {
+		t.Fatalf("ContactDelete; ioutil.ReadAll: %s", err)
+		return
+	}
+
+	if string(out) != `{"ok":true}`+"\n" {
+		t.Fatalf("ContactDelete; failure: %s", out)
+		return
+	}
+}
