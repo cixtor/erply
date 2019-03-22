@@ -32,7 +32,7 @@ type Application struct {
 // Response represents the data to respond to XHR requests.
 type Response struct {
 	Ok    bool        `json:"ok"`
-	Error error       `json:"error,omitempty"`
+	Error string      `json:"error,omitempty"`
 	Data  interface{} `json:"data,omitempty"`
 }
 
@@ -66,5 +66,5 @@ func write(w http.ResponseWriter, r *http.Request, v interface{}) {
 
 // fail writes a JSON encoded object with an error message.
 func fail(w http.ResponseWriter, r *http.Request, err error) {
-	write(w, r, Response{Error: err})
+	write(w, r, Response{Error: err.Error()})
 }
